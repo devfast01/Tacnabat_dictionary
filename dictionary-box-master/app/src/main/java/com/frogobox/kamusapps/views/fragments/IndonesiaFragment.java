@@ -1,0 +1,113 @@
+package com.frogobox.kamusapps.views.fragments;
+
+
+import android.app.SearchManager;
+import android.content.Context;
+import android.os.Bundle;
+import androidx.fragment.app.Fragment;
+import androidx.recyclerview.widget.DividerItemDecoration;
+import androidx.recyclerview.widget.LinearLayoutManager;
+import androidx.recyclerview.widget.RecyclerView;
+import androidx.appcompat.widget.SearchView;
+import android.view.LayoutInflater;
+import android.view.Menu;
+import android.view.MenuInflater;
+import android.view.MenuItem;
+import android.view.View;
+import android.view.ViewGroup;
+
+import com.frogobox.kamusapps.R;
+import com.frogobox.kamusapps.helpers.DictionaryHelper;
+import com.frogobox.kamusapps.models.database.DataContract;
+import com.frogobox.kamusapps.models.dataclass.Dictionary;
+import com.frogobox.kamusapps.views.adapters.DictionaryListAdapter;
+
+import java.util.ArrayList;
+
+/**
+ * A simple {@link Fragment} subclass.
+ */
+public class IndonesiaFragment extends Fragment {
+
+    private DictionaryHelper mDictionaryHelper;
+    private DictionaryListAdapter adapter;
+    private ArrayList<Dictionary> mArrayDictionary;
+
+    public IndonesiaFragment() {
+        // Required empty public constructor
+    }
+
+    @Override
+    public View onCreateView(LayoutInflater inflater, ViewGroup container,
+                             Bundle savedInstanceState) {
+        // Inflate the layout for this fragment
+
+        View rootView = inflater.inflate(R.layout.fragment_indonesia, container, false);
+        setHasOptionsMenu(true);
+        RecyclerView mRecyclerView = rootView.findViewById(R.id.recylerViewIndonesia);
+        mDictionaryHelper = new DictionaryHelper(getContext());
+        adapter = new DictionaryListAdapter(getContext());
+        // -----------------------------------------------------------------------------------------
+        mDictionaryHelper.open();
+        mArrayDictionary = mDictionaryHelper.getAllData(DataContract.DataEntry.TABLE_IN_TO_EN);
+        mDictionaryHelper.close();
+        adapter.addItem(mArrayDictionary);
+        // -----------------------------------------------------------------------------------------
+        LinearLayoutManager mLayoutManager = new LinearLayoutManager(getActivity());
+        DividerItemDecoration divider = new DividerItemDecoration(getContext(), mLayoutManager.getOrientation());
+        // -----------------------------------------------------------------------------------------
+        mRecyclerView.setHasFixedSize(true);
+        mRecyclerView.setLayoutManager(mLayoutManager);
+        mRecyclerView.setAdapter(adapter);
+        // -----------------------------------------------------------------------------------------
+        return rootView;
+    }
+
+    @Override
+    public void onCreateOptionsMenu(Menu menu, MenuInflater inflater) {
+
+        SearchManager searchManager = (SearchManager) getActivity().getSystemService(Context.SEARCH_SERVICE);
+        if (searchManager != null) {
+            SearchView searchView = (SearchView) (menu.findItem(R.id.search)).getActionView();
+            searchView.setSearchableInfo(searchManager.getSearchableInfo(getActivity().getComponentName()));
+            searchView.setQueryHint(getResources().getString(R.string.search_hint));
+            searchView.setOnQueryTextListener(new SearchView.OnQueryTextListener() {
+                @Override
+                public boolean onQueryTextSubmit(String query) {
+                    mDictionaryHelper.open();
+                    mArrayDictionary = mDictionaryHelper.getDataByWord(DataContract.DataEntry.TABLE_IN_TO_EN, query);
+                    mDictionaryHelper.close();
+                    adapter.addItem(mArrayDictionary);
+                    return true;
+                }
+                @Override
+                public boolean onQueryTextChange(String newText) {
+                    if (newText!=null){
+                        mDictionaryHelper.open();
+                        mArrayDictionary = mDictionaryHelper.getDataByWord(DataContract.DataEntry.TABLE_IN_TO_EN, newText);
+                        mDictionaryHelper.close();
+                        adapter.addItem(mArrayDictionary);
+                    } else {
+                        mDictionaryHelper.open();
+                        mArrayDictionary = mDictionaryHelper.getAllData(DataContract.DataEntry.TABLE_IN_TO_EN);
+                        mDictionaryHelper.close();
+                        adapter.addItem(mArrayDictionary);
+                    }
+                    return true;
+                }
+            });
+        } else {
+            mDictionaryHelper.open();
+            mArrayDictionary = mDictionaryHelper.getAllData(DataContract.DataEntry.TABLE_IN_TO_EN);
+            mDictionaryHelper.close();
+            adapter.addItem(mArrayDictionary);
+        }
+
+        super.onCreateOptionsMenu(menu, inflater);
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        return false;
+    }
+}
